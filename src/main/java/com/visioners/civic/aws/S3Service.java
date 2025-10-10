@@ -42,7 +42,7 @@ public class S3Service {
                 .build();
     }
     
-    public String uploadFile(MultipartFile file, String ticketId) throws IOException {
+    public String uploadFile(MultipartFile file) throws IOException {
         if (file.isEmpty()) {
             throw new IllegalArgumentException("File cannot be empty");
         }
@@ -50,7 +50,7 @@ public class S3Service {
         // Generate unique file name
         String originalFilename = file.getOriginalFilename();
         String fileExtension = getFileExtension(originalFilename);
-        String fileName = "tickets/" + ticketId + "/" + UUID.randomUUID().toString() + fileExtension;
+        String fileName = "tickets/" + UUID.randomUUID().toString() + fileExtension;
         
         try {
             // Create PutObjectRequest

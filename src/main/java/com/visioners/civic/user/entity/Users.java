@@ -1,37 +1,27 @@
 package com.visioners.civic.user.entity;
 
 import java.time.Instant;
-import java.util.HashSet;
-import java.util.Set;
-
 import org.hibernate.annotations.CreationTimestamp;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.visioners.civic.role.entity.Role;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
-import lombok.ToString;
-import lombok.EqualsAndHashCode;
 
 @Entity
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = "roles")
-@EqualsAndHashCode(exclude = "roles")
 public class Users {
 
     @Id
@@ -46,13 +36,9 @@ public class Users {
     @Column(nullable = false)
     private String password;
 
-    @ManyToMany(fetch=FetchType.EAGER)
-    @JoinTable(
-        name = "user_roles",
-        joinColumns = @JoinColumn(name="user_id"),
-        inverseJoinColumns = @JoinColumn(name="role_id")
-    )
-    Set<Role> roles = new HashSet<>();
+    @ManyToOne
+    @JsonBackReference
+    Role role;
 
     @Column(nullable = false)
     boolean isVerified;

@@ -1,16 +1,14 @@
-package com.visioners.civic.issue.entity;
+package com.visioners.civic.complaint.entity;
 
 import java.time.Instant;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.visioners.civic.issue.model.IssueCategory;
-import com.visioners.civic.issue.model.IssueSeverity;
-import com.visioners.civic.issue.model.IssueStatus;
-import com.visioners.civic.issue.model.IssueSubCategory;
-import com.visioners.civic.issue.model.Location;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.visioners.civic.complaint.model.IssueSeverity;
+import com.visioners.civic.complaint.model.IssueStatus;
+import com.visioners.civic.complaint.model.Location;
 import com.visioners.civic.staff.entity.Staff;
 import com.visioners.civic.user.entity.Users;
 
@@ -24,24 +22,13 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-@Entity
-@Setter
-@Getter
-public class Complaint {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    Long id;
-
-    @Column(nullable = false, length = 1000)
-    String description;
-
-    @Enumerated(EnumType.STRING)
-    IssueCategory category;
-
-    /*{
+ 
+/*{
         "description":"jnenkjek",
         "category":"road",
         "subCategory":"pothole",
@@ -59,9 +46,22 @@ public class Complaint {
             isoCountryCode": "IN"
         }
     }
-        */
-    @Enumerated(EnumType.STRING)
-    IssueSubCategory subCategory;
+    */
+
+@Entity
+@Setter
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class Complaint {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    Long id;
+
+    @Column(nullable = false, length = 1000)
+    String description;
 
     @Enumerated(EnumType.STRING)
     IssueSeverity severity;
@@ -69,48 +69,57 @@ public class Complaint {
     @Embedded
     Location location;  
 
+    @Column(unique = true, nullable = false, name = "image_url")
     String imageUrl;
 
+    @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     IssueStatus status;
 
     @ManyToOne
-    @JsonIgnore
-    @JoinColumn(name = "raised_by_id")
+    @JoinColumn(name = "raised_by_id", nullable = false)
+    @JsonManagedReference
     Users raisedBy;
 
     @ManyToOne
-    @JoinColumn(name = "district_id")
+    @JoinColumn(name = "district_id", nullable = false)
+    @JsonManagedReference
     District district;
 
     @ManyToOne
-    @JoinColumn(name = "block_id")
+    @JoinColumn(name = "block_id", nullable = false)
+    @JsonManagedReference
     Block block;
 
     @ManyToOne
-    @JoinColumn(name = "department_id")
+    @JoinColumn(name = "department_id", nullable = false)
+    @JsonManagedReference
     Department department;
 
-    @ManyToOne
-    @JoinColumn(name = "assigned_staff_id")
-    Users assignedStaff;
 
     @ManyToOne
     @JoinColumn(name = "assigned_by_staff_id")
-    Users assignedBy;
+    @JsonManagedReference
+    Staff assignedBy;
+    
+    @ManyToOne
+    @JoinColumn(name = "assigned_staff_id")
+    @JsonManagedReference
+    Staff assignedTo;
+
+    @Column(unique = true)
+    String solutionImageUrl;
+    
+    String solutionNote;
+
+    @ManyToOne
+    @JoinColumn(name = "approved_by_id")
+    @JsonManagedReference
+    Staff approvedBy;
 
     @CreationTimestamp
     Instant createdAt;
 
     @UpdateTimestamp
     Instant updatedAt;
-
-    String resolutionNote;
-
-    String resolutionImageUrl;
-
-    @ManyToOne
-    @JoinColumn(name = "approved_by_id")
-    @JsonIgnore
-    Users approvedBy;
 }

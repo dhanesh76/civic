@@ -1,10 +1,8 @@
 package com.visioners.civic.auth.service;
 
 import java.time.Instant;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.springframework.http.HttpStatus;
@@ -56,25 +54,18 @@ public class AuthenticationService {
     public RegisterResponse register(RegisterRequest registerRequest) {
         String mobileNumber = registerRequest.mobileNumber();
 
-        if (usersRepository.findByMobileNumberWithRoles(mobileNumber).isPresent()) {
+        if (usersRepository.findByMobileNumber(mobileNumber).isPresent()) {
             throw new RuntimeException("Mobile number already registered. Continue with login.");
         }
-
-        Role role = roleRepository.findByName(DEFAULT_ROLE)
-                .orElseThrow(() -> new RoleNotFoundException("Role: " + DEFAULT_ROLE + " not found"));
-
-        Set<Role> roles = new HashSet<>();
-        roles.add(role);
 
         String encodedPassword = bcryptPasswordEncoder.encode(registerRequest.password());
 
         // Store in Redis temp session
-        RegisterSession session = new RegisterSession(mobileNumber, encodedPassword, roles);
+        RegisterSession session = new RegisterSession(mobileNumber, encodedPassword, DEFAULT_ROLE);
         redisTemplate.opsForValue().set("temp:register:" + mobileNumber, session, 30, TimeUnit.MINUTES);
 
         // Send OTP
-        otpService.sendOtp(new com.visioners.civic.auth.dto.OtpRequest(mobileNumber,
-                com.visioners.civic.auth.model.OtpPurpose.VERIFICATION));
+        otpService.sendOtp(new OtpRequest(mobileNumber,OtpPurpose.VERIFICATION));
 
         return new RegisterResponse(mobileNumber,
                 "OTP sent to your mobile. Please verify to complete registration");
@@ -84,7 +75,7 @@ public class AuthenticationService {
         String mobileNumber = loginRequest.mobileNumber();
         String password = loginRequest.password();
 
-        Optional<Users> users = usersRepository.findByMobileNumberWithRoles(mobileNumber);
+        Optional<Users> users = usersRepository.findByMobileNumber(mobileNumber);
         if(!users.get().isVerified()){
             throw new RuntimeException("mobile number not verified");
         }
@@ -118,7 +109,7 @@ public class AuthenticationService {
             ));
         }
 
-        if (request.purpose() == com.visioners.civic.auth.model.OtpPurpose.VERIFICATION) {
+        if (request.purpose() == OtpPurpose.VERIFICATION) {
             if (!isRegisterSessionValid(request.mobileNumber())) {
                 return ResponseEntity.status(HttpStatus.GATEWAY_TIMEOUT)
                         .body(Map.of("message", "Session expired. Please register again."));
@@ -130,26 +121,7 @@ public class AuthenticationService {
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(Map.of("message", "User registered successfully. Continue to login."));
         }
-
         return ResponseEntity.ok(Map.of("message", "OTP verified"));
-    }
-
-    boolean isRegisterSessionValid(String mobileNumber) {
-        return Boolean.TRUE.equals(redisTemplate.hasKey("temp:register:" + mobileNumber));
-    }
-
-    void saveNewUser(String mobileNumber) {
-        RegisterSession session =
-                (RegisterSession) redisTemplate.opsForValue().get("temp:register:" + mobileNumber);
-
-        if (session != null) {
-            Users user = new Users();
-            user.setMobileNumber(session.mobileNumber());
-            user.setPassword(session.encodedPassword());
-            user.setRoles(session.roles());
-            user.setVerified(true);
-            usersRepository.save(user);
-        }
     }
 
     public ResponseEntity<LoginResponse> refresh(Map<String, String> body){
@@ -163,7 +135,6 @@ public class AuthenticationService {
         }
         
         Users user = refreshToken.getUser();
-
         String accessToken = jwtTokenService.generateToken(new UserPrincipal(user));
 
         return ResponseEntity.ok(LoginResponse.builder()
@@ -211,7 +182,29 @@ public class AuthenticationService {
         }
     }
 
-    boolean mobileNumberExists(String mobileNumber){
+    //utility functions 
+    private boolean isRegisterSessionValid(String mobileNumber) {
+        return Boolean.TRUE.equals(redisTemplate.hasKey("temp:register:" + mobileNumber));
+    }
+
+    private void saveNewUser(String mobileNumber) {
+        RegisterSession session =
+                (RegisterSession) redisTemplate.opsForValue().get("temp:register:" + mobileNumber);
+
+        if (session != null) {
+            Role role = roleRepository.findByName(session.role())
+                .orElseThrow(() -> new RoleNotFoundException("Role: " + DEFAULT_ROLE + " not found"));
+
+            Users user = new Users();
+            user.setMobileNumber(session.mobileNumber());
+            user.setPassword(session.encodedPassword());
+            user.setRole(role);
+            user.setVerified(true);
+            usersRepository.save(user);
+        }
+    }
+
+    private boolean mobileNumberExists(String mobileNumber){
         return usersRepository.existsByMobileNumber(mobileNumber);
     }
 

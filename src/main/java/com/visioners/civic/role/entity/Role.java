@@ -3,7 +3,7 @@ package com.visioners.civic.role.entity;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.visioners.civic.user.entity.Users;
 
 import jakarta.persistence.Column;
@@ -11,21 +11,17 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToMany;
 import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import lombok.ToString;
 
 @Entity
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = "users")
-@EqualsAndHashCode(exclude = "users")
 public class Role {
 
     @Id
@@ -35,8 +31,8 @@ public class Role {
     @Column(nullable=false, unique = true)
     String name;
 
-    @ManyToMany(mappedBy = "roles")
-    @JsonBackReference
+    @JsonManagedReference
+    @OneToMany(mappedBy = "role")
     Set<Users> users = new HashSet<>();
 }
 

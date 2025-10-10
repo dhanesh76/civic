@@ -1,10 +1,12 @@
 
-package com.visioners.civic.issue.entity;
+package com.visioners.civic.complaint.entity;
 
 import java.util.HashSet;
 import java.util.Set;
 
-import jakarta.persistence.CascadeType;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -29,8 +31,10 @@ public class Block {
 
     @ManyToOne
     @JoinColumn(name = "district_id", nullable = false)
+    @JsonManagedReference
     private District district;
 
-    @OneToMany(mappedBy = "block", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "block")
+    @JsonBackReference
     private Set<Department> departments = new HashSet<>();
 }

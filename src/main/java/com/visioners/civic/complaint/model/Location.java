@@ -1,4 +1,4 @@
-package com.visioners.civic.issue.model;
+package com.visioners.civic.complaint.model;
 
  
 import jakarta.persistence.Embeddable;
@@ -14,7 +14,7 @@ public class Location {
     private double accuracy;
     private double altitude;
     private String street;
-    private String subLocality;     //
+    private String subLocality;     
     private String locality;        //block
     private String subAdminArea;    //district
     private String adminArea;       //state

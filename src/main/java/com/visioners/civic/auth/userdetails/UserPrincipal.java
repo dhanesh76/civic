@@ -1,8 +1,7 @@
 package com.visioners.civic.auth.userdetails;
 
 import java.util.Collection;
-import java.util.stream.Collectors;
-
+import java.util.Collections;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -19,10 +18,10 @@ public class UserPrincipal implements UserDetails{
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return user.getRoles()
-                .stream()
-                .map(role -> new SimpleGrantedAuthority(role.getName()))
-                .collect(Collectors.toList());
+        return Collections
+            .singletonList(
+                new SimpleGrantedAuthority("ROLE_" + user.getRole().getName())
+            );
     }
 
     @Override
